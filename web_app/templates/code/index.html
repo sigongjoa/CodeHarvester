@@ -1,0 +1,141 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-8">
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="card-title">코드 목록</h5>
+            </div>
+            <div class="card-body">
+                <form method="GET" action="{{ url_for('code.index') }}" class="mb-4">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <input type="text" class="form-control" name="query" placeholder="검색어" value="{{ query }}">
+                        </div>
+                        <div class="col-md-2">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" name="suitable_only" value="true" id="suitableOnly" {% if suitable_only %}checked{% endif %}>
+                                <label class="form-check-label" for="suitableOnly">
+                                    적합한 코드만
+                                </label>
+                            </div>
+                        </div>
+                        <div class="col-md-2">
+                            <input type="number" class="form-control" name="min_quality" placeholder="최소 품질" value="0">
+
+                        </div>
+                        <div class="col-md-2">
+                            <button type="submit" class="btn btn-primary w-100">검색</button>
+                        </div>
+                    </div>
+                </form>
+
+                {% if codes %}
+                <div class="table-responsive">
+                    <table class="table table-striped table-hover">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>파일명</th>
+                                <th>저장소</th>
+                                <th>품질 점수</th>
+                                <th>코드 라인</th>
+                                <th>적합성</th>
+                                <th>태그</th>
+                                <th>작업</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for code in codes %}
+                            <tr>
+                                <td>{{ code.id }}</td>
+                                <td>{{ code.name }}</td>
+                                <td>{{ code.repo_name }}</td>
+                                <td>{{ "%.1f"|format(code.quality_score) if code.quality_score else 'N/A' }}</td>
+                                <td>{{ code.code_lines }}</td>
+                                <td>
+                                    {% if code.is_suitable %}
+                                    <span class="badge bg-success">적합</span>
+                                    {% else %}
+                                    <span class="badge bg-danger">부적합</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if code.tags %}
+                                    {% for tag in code.tags %}
+                                    <span class="badge bg-info">{{ tag }}</span>
+                                    {% endfor %}
+                                    {% else %}
+                                    <span class="text-muted">없음</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <div class="btn-group btn-group-sm">
+                                        <a href="{{ url_for('code.view', code_id=code.id) }}" class="btn btn-primary">보기</a>
+                                        <a href="{{ url_for('code.edit', code_id=code.id) }}" class="btn btn-warning">편집</a>
+                                        <button type="button" class="btn btn-danger" data-bs-toggle="modal" data-bs-target="#deleteModal{{ code.id }}">삭제</button>
+                                    </div>
+                                    
+                                    <!-- 삭제 확인 모달 -->
+                                    <div class="modal fade" id="deleteModal{{ code.id }}" tabindex="-1" aria-labelledby="deleteModalLabel{{ code.id }}" aria-hidden="true">
+                                        <div class="modal-dialog">
+                                            <div class="modal-content">
+                                                <div class="modal-header">
+                                                    <h5 class="modal-title" id="deleteModalLabel{{ code.id }}">코드 삭제 확인</h5>
+                                                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                                </div>
+                                                <div class="modal-body">
+                                                    <p>정말로 <strong>{{ code.name }}</strong> 파일을 삭제하시겠습니까?</p>
+                                                    <p class="text-danger">이 작업은 되돌릴 수 없습니다.</p>
+                                                </div>
+                                                <div class="modal-footer">
+                                                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">취소</button>
+                                                    <form action="{{ url_for('code.delete', code_id=code.id) }}" method="POST" class="d-inline">
+                                                        <button type="submit" class="btn btn-danger">삭제</button>
+                                                    </form>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <div class="alert alert-info">
+                    검색 결과가 없습니다.
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-4">
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="card-title">빠른 작업</h5>
+            </div>
+            <div class="card-body">
+                <div class="d-grid gap-3">
+                    <a href="{{ url_for('crawler.new_crawl') }}" class="btn btn-primary">새 크롤링 작업 시작</a>
+                    <a href="{{ url_for('code.stats') }}" class="btn btn-info">코드 통계 보기</a>
+                </div>
+            </div>
+        </div>
+        
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title">필터 도움말</h5>
+            </div>
+            <div class="card-body">
+                <p><strong>검색어</strong>: 파일명, 저장소명, 경로 등에서 검색합니다.</p>
+                <p><strong>적합한 코드만</strong>: 학습용으로 적합하다고 판단된 코드만 표시합니다.</p>
+                <p><strong>최소 품질</strong>: 지정된 품질 점수 이상의 코드만 표시합니다 (0-10).</p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

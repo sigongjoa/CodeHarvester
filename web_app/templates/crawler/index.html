@@ -1,0 +1,176 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-8">
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="card-title">크롤러 관리</h5>
+            </div>
+            <div class="card-body">
+                <div class="d-grid gap-3">
+                    <a href="{{ url_for('crawler.new_crawl') }}" class="btn btn-primary btn-lg">
+                        <i class="bi bi-cloud-download"></i> 새 크롤링 작업 시작
+                    </a>
+                    <a href="{{ url_for('code.index') }}" class="btn btn-success btn-lg">
+                        <i class="bi bi-code-slash"></i> 코드 목록 보기
+                    </a>
+                    <a href="{{ url_for('crawler.status') }}" class="btn btn-info btn-lg">
+                        <i class="bi bi-activity"></i> 크롤링 상태 확인
+                    </a>
+
+                    <!-- 메타데이터 업로드 -->
+                    <form action="{{ url_for('crawler.import_metadata') }}" method="post" enctype="multipart/form-data">
+                        <div class="d-grid gap-2">
+                            <input type="file" name="file" accept=".json" class="form-control mb-2" required>
+                            <button class="btn btn-secondary btn-lg" type="submit">
+                                <i class="bi bi-upload"></i> 메타데이터 업로드
+                            </button>
+                        </div>
+                    </form>
+                </div>
+
+                <hr>
+
+                <h5 class="mt-4">URL로 크롤링</h5>
+                <p>특정 GitHub 저장소 URL을 직접 입력하여 크롤링할 수 있습니다.</p>
+
+                <form id="urlCrawlForm" class="mt-3">
+                    <div class="mb-3">
+                        <label for="repoUrl" class="form-label">GitHub 저장소 URL</label>
+                        <input type="url" class="form-control" id="repoUrl" name="repo_url" 
+                               placeholder="https://github.com/username/repository" required>
+                        <div class="form-text">예: https://github.com/tensorflow/tensorflow</div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="maxFiles" class="form-label">최대 파일 수</label>
+                        <input type="number" class="form-control" id="maxFiles" name="max_files" 
+                               value="10" min="1" max="50" required>
+                    </div>
+
+                    <button type="submit" class="btn btn-success">URL 크롤링 시작</button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-4">
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="card-title">크롤링 통계</h5>
+            </div>
+            <div class="card-body">
+                <div id="crawling-stats-loading" class="text-center">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">로딩 중...</span>
+                    </div>
+                    <p>통계 로딩 중...</p>
+                </div>
+                <div id="crawling-stats" class="d-none">
+                    <div class="row">
+                        <div class="col-6">
+                            <div class="stat-item">
+                                <h3 id="repo-count">0</h3>
+                                <p>저장소 수</p>
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <div class="stat-item">
+                                <h3 id="file-count">0</h3>
+                                <p>파일 수</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row mt-3">
+                        <div class="col-6">
+                            <div class="stat-item">
+                                <h3 id="suitable-count">0</h3>
+                                <p>적합한 파일</p>
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <div class="stat-item">
+                                <h3 id="avg-quality">0.0</h3>
+                                <p>평균 품질 점수</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title">도움말</h5>
+            </div>
+            <div class="card-body">
+                <h6>크롤링 방법</h6>
+                <p>두 가지 방법으로 GitHub에서 파이썬 코드를 크롤링할 수 있습니다:</p>
+                <ol>
+                    <li><strong>검색 쿼리 사용:</strong> GitHub 검색 쿼리를 사용하여 여러 저장소에서 코드를 크롤링합니다.</li>
+                    <li><strong>URL 직접 입력:</strong> 특정 GitHub 저장소 URL을 직접 입력하여 해당 저장소의 코드만 크롤링합니다.</li>
+                </ol>
+
+                <h6>API 제한</h6>
+                <p>GitHub API는 인증되지 않은 요청의 경우 시간당 요청 수 제한이 있습니다. 크롤링 작업이 실패하면 잠시 후 다시 시도해보세요.</p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // 📊 통계 정보 가져오기
+    fetch('/code/api/stats')
+        .then(response => response.json())
+        .then(data => {
+            document.getElementById('repo-count').textContent = data.repository_count || 0;
+            document.getElementById('file-count').textContent = data.file_count || 0;
+            document.getElementById('suitable-count').textContent = data.suitable_file_count || 0;
+            document.getElementById('avg-quality').textContent = (data.average_quality_score || 0).toFixed(1);
+
+            document.getElementById('crawling-stats-loading').classList.add('d-none');
+            document.getElementById('crawling-stats').classList.remove('d-none');
+        })
+        .catch(error => {
+            console.error('통계 정보 가져오기 오류:', error);
+            document.getElementById('crawling-stats-loading').innerHTML = '<div class="alert alert-danger">통계 정보를 가져오는 중 오류가 발생했습니다.</div>';
+        });
+
+    // ✅ URL 크롤링 폼 제출 처리
+    const urlForm = document.getElementById('urlCrawlForm');
+    urlForm.addEventListener('submit', function(e) {
+        e.preventDefault();
+
+        const repoUrl = document.getElementById('repoUrl').value;
+        const maxFiles = parseInt(document.getElementById('maxFiles').value);
+
+        fetch('/crawler/api/start_url', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                repo_url: repoUrl,
+                max_files: maxFiles
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                alert('✅ URL 크롤링이 시작되었습니다!\n\n저장소 URL: ' + repoUrl + '\n최대 파일 수: ' + maxFiles);
+                window.location.href = '/crawler/status';
+            } else {
+                alert('❌ 크롤링 실패: ' + data.message);
+            }
+        })
+        .catch(error => {
+            alert('❌ 요청 실패: ' + error.message);
+        });
+    });
+});
+</script>
+{% endblock %}

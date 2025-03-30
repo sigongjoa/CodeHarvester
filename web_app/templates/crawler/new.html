@@ -1,0 +1,135 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-8">
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="card-title">새 크롤링 작업</h5>
+            </div>
+            <div class="card-body">
+                <form method="POST" action="{{ url_for('crawler.new_crawl') }}" id="crawlForm">
+                    <div class="mb-3">
+                        <label for="query" class="form-label">GitHub 검색 쿼리</label>
+                        <input type="text" class="form-control" id="query" name="query" 
+                               value="language:python stars:>1000" required>
+                        <div class="form-text">GitHub 검색 쿼리 형식을 사용합니다. 예: "language:python stars:>1000"</div>
+                    </div>
+
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label for="max_repos" class="form-label">최대 저장소 수</label>
+                            <input type="number" class="form-control" id="max_repos" name="max_repos" 
+                                   value="5" min="1" max="20" required>
+                            <div class="form-text">크롤링할 최대 저장소 수입니다.</div>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="max_files" class="form-label">저장소당 최대 파일 수</label>
+                            <input type="number" class="form-control" id="max_files" name="max_files" 
+                                   value="10" min="1" max="50" required>
+                            <div class="form-text">각 저장소에서 크롤링할 최대 파일 수입니다.</div>
+                        </div>
+                    </div>
+
+                    <div class="form-check mb-3">
+                        <input class="form-check-input" type="checkbox" id="filter_immediately" name="filter_immediately" checked>
+                        <label class="form-check-label" for="filter_immediately">
+                            크롤링 후 즉시 필터링 실행
+                        </label>
+                    </div>
+
+                    <div class="d-flex justify-content-between">
+                        <a href="{{ url_for('crawler.index') }}" class="btn btn-secondary">취소</a>
+                        <button type="submit" class="btn btn-primary" id="startCrawlBtn">크롤링 시작</button>
+                    </div>
+                </form>
+
+                <!-- URL 크롤링 별도 폼 -->
+                <hr>
+                <form method="POST" action="{{ url_for('crawler.crawl_by_url') }}">
+                    <h6>URL로 크롤링</h6>
+                    <div class="mb-3">
+                        <label for="repo_url" class="form-label">GitHub 저장소 URL</label>
+                        <input 
+                            type="text" 
+                            class="form-control" 
+                            id="repo_url" 
+                            name="repo_url" 
+                            placeholder="https://github.com/username/repository" 
+                            required
+                        >
+                    </div>
+                    <div class="mb-3">
+                        <label for="max_files" class="form-label">최대 파일 수</label>
+                        <input 
+                            type="number" 
+                            class="form-control" 
+                            id="max_files" 
+                            name="max_files" 
+                            value="10" 
+                            min="1" 
+                            max="100" 
+                            required
+                        >
+                    </div>
+                    <button type="submit" class="btn btn-success">URL 크롤링 시작</button>
+                </form>
+
+                <!-- 크롤링 진행 상태 -->
+                <div id="crawlingProgress" class="mt-4 d-none">
+                    <h5>크롤링 진행 중...</h5>
+                    <div class="progress mb-3">
+                        <div class="progress-bar progress-bar-striped progress-bar-animated" role="progressbar" style="width: 0%"></div>
+                    </div>
+                    <div id="crawlingStatus" class="text-muted"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-4">
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="card-title">크롤링 도움말</h5>
+            </div>
+            <div class="card-body">
+                <h6>GitHub 검색 쿼리 예시</h6>
+                <ul>
+                    <li><code>language:python stars:>1000</code> - 별이 1000개 이상인 파이썬 저장소</li>
+                    <li><code>language:python topic:machine-learning</code> - 머신러닝 관련 파이썬 저장소</li>
+                    <li><code>language:python created:>2023-01-01</code> - 2023년 이후 생성된 파이썬 저장소</li>
+                    <li><code>language:python license:mit</code> - MIT 라이센스를 사용하는 파이썬 저장소</li>
+                </ul>
+
+                <h6>주의사항</h6>
+                <p>GitHub API는 인증되지 않은 요청의 경우 시간당 요청 수 제한이 있습니다. 크롤링 작업이 실패하면 잠시 후 다시 시도해보세요.</p>
+
+                <h6>필터링</h6>
+                <p>크롤링 후 자동으로 코드 품질을 평가하고 학습용으로 적합한 코드를 필터링합니다. 필터링 기준은 다음과 같습니다:</p>
+                <ul>
+                    <li>품질 점수: 6.0 이상</li>
+                    <li>코드 라인 수: 10-1000 라인</li>
+                    <li>라이센스: MIT, Apache 2.0, BSD, GPL 등</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const form = document.getElementById('crawlForm');
+    const startBtn = document.getElementById('startCrawlBtn');
+    const progressDiv = document.getElementById('crawlingProgress');
+    const progressBar = progressDiv.querySelector('.progress-bar');
+    const statusDiv = document.getElementById('crawlingStatus');
+
+    form.addEventListener('submit', function(e) {
+        // 비동기 크롤링을 위한 API 호출 구현 시 사용
+        // 현재는 동기식으로 처리되므로 주석 처리
+    });
+});
+</script>
+{% endblock %}

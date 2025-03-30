@@ -1,0 +1,353 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-12">
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="card-title">일괄 작업</h5>
+            </div>
+            <div class="card-body">
+                <div class="alert alert-info">
+                    <p>이 페이지에서는 여러 파일에 대해 일괄적으로 작업을 수행할 수 있습니다.</p>
+                </div>
+                
+                <div class="mb-4">
+                    <h5>파일 선택</h5>
+                    <form id="searchForm" class="mb-3">
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <input type="text" class="form-control" id="searchQuery" placeholder="검색어">
+                            </div>
+                            <div class="col-md-2">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="suitableOnly">
+                                    <label class="form-check-label" for="suitableOnly">
+                                        적합한 코드만
+                                    </label>
+                                </div>
+                            </div>
+                            <div class="col-md-2">
+                                <input type="number" class="form-control" id="minQuality" placeholder="최소 품질" step="0.1" min="0" max="10">
+                            </div>
+                            <div class="col-md-2">
+                                <button type="submit" class="btn btn-primary w-100">검색</button>
+                            </div>
+                        </div>
+                    </form>
+                    
+                    <div id="searchResults" class="table-responsive">
+                        <table class="table table-striped">
+                            <thead>
+                                <tr>
+                                    <th>
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" id="selectAll">
+                                            <label class="form-check-label" for="selectAll"></label>
+                                        </div>
+                                    </th>
+                                    <th>ID</th>
+                                    <th>파일명</th>
+                                    <th>저장소</th>
+                                    <th>품질 점수</th>
+                                    <th>적합성</th>
+                                </tr>
+                            </thead>
+                            <tbody id="resultsTable">
+                                <!-- 검색 결과가 여기에 표시됩니다 -->
+                            </tbody>
+                        </table>
+                    </div>
+                    
+                    <div id="noResults" class="alert alert-warning d-none">
+                        검색 결과가 없습니다.
+                    </div>
+                    
+                    <div id="loadingResults" class="text-center">
+                        <div class="spinner-border text-primary" role="status">
+                            <span class="visually-hidden">로딩 중...</span>
+                        </div>
+                        <p>검색 중...</p>
+                    </div>
+                </div>
+                
+                <div class="mb-4">
+                    <h5>일괄 작업</h5>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="card">
+                                <div class="card-header">태그 관리</div>
+                                <div class="card-body">
+                                    <form id="batchTagForm">
+                                        <div class="mb-3">
+                                            <label for="tagName" class="form-label">태그 이름</label>
+                                            <input type="text" class="form-control" id="tagName" required>
+                                        </div>
+                                        <div class="mb-3">
+                                            <label class="form-label">작업</label>
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="radio" name="tagAction" id="tagAdd" value="add" checked>
+                                                <label class="form-check-label" for="tagAdd">
+                                                    태그 추가
+                                                </label>
+                                            </div>
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="radio" name="tagAction" id="tagRemove" value="remove">
+                                                <label class="form-check-label" for="tagRemove">
+                                                    태그 제거
+                                                </label>
+                                            </div>
+                                        </div>
+                                        <button type="submit" class="btn btn-primary" id="batchTagBtn" disabled>태그 작업 실행</button>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="card">
+                                <div class="card-header">파일 삭제</div>
+                                <div class="card-body">
+                                    <div class="alert alert-danger">
+                                        <p><strong>주의:</strong> 선택한 모든 파일이 삭제됩니다. 이 작업은 되돌릴 수 없습니다.</p>
+                                    </div>
+                                    <button type="button" class="btn btn-danger" id="batchDeleteBtn" disabled>선택한 파일 삭제</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div id="batchResult" class="alert alert-success d-none">
+                    작업이 성공적으로 완료되었습니다.
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 삭제 확인 모달 -->
+<div class="modal fade" id="deleteConfirmModal" tabindex="-1" aria-labelledby="deleteConfirmModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="deleteConfirmModalLabel">삭제 확인</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p><span id="deleteCount">0</span>개의 파일을 삭제하시겠습니까?</p>
+                <p class="text-danger">이 작업은 되돌릴 수 없습니다.</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">취소</button>
+                <button type="button" class="btn btn-danger" id="confirmDeleteBtn">삭제</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const searchForm = document.getElementById('searchForm');
+    const resultsTable = document.getElementById('resultsTable');
+    const noResults = document.getElementById('noResults');
+    const loadingResults = document.getElementById('loadingResults');
+    const selectAll = document.getElementById('selectAll');
+    const batchTagBtn = document.getElementById('batchTagBtn');
+    const batchDeleteBtn = document.getElementById('batchDeleteBtn');
+    const batchTagForm = document.getElementById('batchTagForm');
+    const batchResult = document.getElementById('batchResult');
+    const deleteConfirmModal = new bootstrap.Modal(document.getElementById('deleteConfirmModal'));
+    const deleteCount = document.getElementById('deleteCount');
+    const confirmDeleteBtn = document.getElementById('confirmDeleteBtn');
+    
+    let selectedFiles = [];
+    
+    // 검색 폼 제출 처리
+    searchForm.addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        const query = document.getElementById('searchQuery').value;
+        const suitableOnly = document.getElementById('suitableOnly').checked;
+        const minQuality = document.getElementById('minQuality').value;
+        
+        // 검색 시작
+        loadingResults.classList.remove('d-none');
+        noResults.classList.add('d-none');
+        resultsTable.innerHTML = '';
+        selectedFiles = [];
+        updateBatchButtons();
+        
+        // API 호출
+        const params = new URLSearchParams();
+        if (query) params.append('query', query);
+        if (suitableOnly) params.append('suitable_only', 'true');
+        if (minQuality) params.append('min_quality', minQuality);
+        
+        fetch(`/code/api/list?${params.toString()}`)
+            .then(response => response.json())
+            .then(data => {
+                loadingResults.classList.add('d-none');
+                
+                if (data.length === 0) {
+                    noResults.classList.remove('d-none');
+                    return;
+                }
+                
+                // 결과 표시
+                data.forEach(file => {
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                        <td>
+                            <div class="form-check">
+                                <input class="form-check-input file-checkbox" type="checkbox" value="${file.id}" id="file${file.id}">
+                                <label class="form-check-label" for="file${file.id}"></label>
+                            </div>
+                        </td>
+                        <td>${file.id}</td>
+                        <td>${file.name}</td>
+                        <td>${file.repo_name}</td>
+                        <td>${file.quality_score ? file.quality_score.toFixed(1) : 'N/A'}</td>
+                        <td>${file.is_suitable ? '<span class="badge bg-success">적합</span>' : '<span class="badge bg-danger">부적합</span>'}</td>
+                    `;
+                    resultsTable.appendChild(row);
+                });
+                
+                // 체크박스 이벤트 처리
+                document.querySelectorAll('.file-checkbox').forEach(checkbox => {
+                    checkbox.addEventListener('change', updateSelectedFiles);
+                });
+            })
+            .catch(error => {
+                console.error('검색 오류:', error);
+                loadingResults.innerHTML = '<div class="alert alert-danger">검색 중 오류가 발생했습니다.</div>';
+            });
+    });
+    
+    // 전체 선택 체크박스 처리
+    selectAll.addEventListener('change', function() {
+        const checkboxes = document.querySelectorAll('.file-checkbox');
+        checkboxes.forEach(checkbox => {
+            checkbox.checked = selectAll.checked;
+        });
+        updateSelectedFiles();
+    });
+    
+    // 선택된 파일 업데이트
+    function updateSelectedFiles() {
+        selectedFiles = Array.from(document.querySelectorAll('.file-checkbox:checked')).map(checkbox => parseInt(checkbox.value));
+        updateBatchButtons();
+    }
+    
+    // 일괄 작업 버튼 상태 업데이트
+    function updateBatchButtons() {
+        const hasSelected = selectedFiles.length > 0;
+        batchTagBtn.disabled = !hasSelected;
+        batchDeleteBtn.disabled = !hasSelected;
+    }
+    
+    // 태그 일괄 작업 처리
+    batchTagForm.addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        const tagName = document.getElementById('tagName').value;
+        const action = document.querySelector('input[name="tagAction"]:checked').value;
+        
+        if (!tagName || selectedFiles.length === 0) return;
+        
+        // API 호출
+        fetch('/code_crud/api/batch/tag', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                file_ids: selectedFiles,
+                tag_name: tagName,
+                action: action
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                batchResult.textContent = `${selectedFiles.length}개 파일에 대한 태그 작업이 완료되었습니다.`;
+                batchResult.classList.remove('d-none');
+                setTimeout(() => {
+                    batchResult.classList.add('d-none');
+                }, 5000);
+            } else {
+                alert('오류: ' + data.message);
+            }
+        })
+        .catch(error => {
+            console.error('태그 작업 오류:', error);
+            alert('오류가 발생했습니다: ' + error.message);
+        });
+    });
+    
+    // 삭제 버튼 클릭 처리
+    batchDeleteBtn.addEventListener('click', function() {
+        if (selectedFiles.length === 0) return;
+        
+        deleteCount.textContent = selectedFiles.length;
+        deleteConfirmModal.show();
+    });
+    
+    // 삭제 확인 처리
+    confirmDeleteBtn.addEventListener('click', function() {
+        // API 호출
+        fetch('/code_crud/api/batch/delete', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                file_ids: selectedFiles
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            deleteConfirmModal.hide();
+            
+            if (data.success) {
+                batchResult.textContent = `${selectedFiles.length}개 파일이 삭제되었습니다.`;
+                batchResult.classList.remove('alert-success');
+                batchResult.classList.add('alert-warning');
+                batchResult.classList.remove('d-none');
+                
+                // 삭제된 파일 행 제거
+                selectedFiles.forEach(fileId => {
+                    const checkbox = document.getElementById(`file${fileId}`);
+                    if (checkbox) {
+                        const row = checkbox.closest('tr');
+                        if (row) row.remove();
+                    }
+                });
+                
+                // 선택 초기화
+                selectedFiles = [];
+                updateBatchButtons();
+                selectAll.checked = false;
+                
+                setTimeout(() => {
+                    batchResult.classList.add('d-none');
+                    batchResult.classList.remove('alert-warning');
+                    batchResult.classList.add('alert-success');
+                }, 5000);
+            } else {
+                alert('오류: ' + data.message);
+            }
+        })
+        .catch(error => {
+            deleteConfirmModal.hide();
+            console.error('삭제 오류:', error);
+            alert('오류가 발생했습니다: ' + error.message);
+        });
+    });
+    
+    // 페이지 로드 시 자동 검색
+    searchForm.dispatchEvent(new Event('submit'));
+});
+</script>
+{% endblock %}

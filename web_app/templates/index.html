@@ -1,0 +1,167 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-6">
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="card-title">크롤링 통계</h5>
+            </div>
+            <div class="card-body">
+                <div id="crawling-stats-loading" class="text-center">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">로딩 중...</span>
+                    </div>
+                    <p>통계 로딩 중...</p>
+                </div>
+                <div id="crawling-stats" class="d-none">
+                    <div class="row">
+                        <div class="col-6">
+                            <div class="stat-item">
+                                <h3 id="repo-count">0</h3>
+                                <p>저장소 수</p>
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <div class="stat-item">
+                                <h3 id="file-count">0</h3>
+                                <p>파일 수</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row mt-3">
+                        <div class="col-6">
+                            <div class="stat-item">
+                                <h3 id="suitable-count">0</h3>
+                                <p>적합한 파일</p>
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <div class="stat-item">
+                                <h3 id="avg-quality">0.0</h3>
+                                <p>평균 품질 점수</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="card-footer">
+                <a href="{{ url_for('code.stats') }}" class="btn btn-outline-primary">자세한 통계 보기</a>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-6">
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="card-title">빠른 작업</h5>
+            </div>
+            <div class="card-body">
+                <div class="d-grid gap-3">
+                    <a href="{{ url_for('crawler.new_crawl') }}" class="btn btn-primary">새 크롤링 작업 시작</a>
+                    <a href="{{ url_for('code.index') }}" class="btn btn-success">코드 목록 보기</a>
+                    <a href="{{ url_for('crawler.status') }}" class="btn btn-info">크롤링 상태 확인</a>
+                    <!-- 메타데이터 업로드 버튼, 실제 업로드는 자동으로 처리 -->
+                    <a href="{{ url_for('crawler.import_metadata') }}" class="btn btn-warning">메타데이터 업로드</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-12">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title">최근 수집된 코드</h5>
+            </div>
+            <div class="card-body">
+                <div id="recent-codes-loading" class="text-center">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">로딩 중...</span>
+                    </div>
+                    <p>최근 코드 로딩 중...</p>
+                </div>
+                <div id="recent-codes" class="d-none">
+                    <table class="table table-striped">
+                        <thead>
+                            <tr>
+                                <th>파일명</th>
+                                <th>저장소</th>
+                                <th>품질 점수</th>
+                                <th>적합성</th>
+                                <th>작업</th>
+                            </tr>
+                        </thead>
+                        <tbody id="recent-codes-table">
+                            <!-- 자바스크립트로 채워짐 -->
+                        </tbody>
+                    </table>
+                </div>
+                <div id="no-codes" class="alert alert-info d-none">
+                    아직 수집된 코드가 없습니다. 크롤링 작업을 시작해보세요.
+                </div>
+            </div>
+            <div class="card-footer">
+                <a href="{{ url_for('code.index') }}" class="btn btn-outline-primary">모든 코드 보기</a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // 통계 정보 가져오기
+    fetch('/code/api/stats')
+        .then(response => response.json())
+        .then(data => {
+            document.getElementById('repo-count').textContent = data.repository_count || 0;
+            document.getElementById('file-count').textContent = data.file_count || 0;
+            document.getElementById('suitable-count').textContent = data.suitable_file_count || 0;
+            document.getElementById('avg-quality').textContent = (data.average_quality_score || 0).toFixed(1);
+            
+            document.getElementById('crawling-stats-loading').classList.add('d-none');
+            document.getElementById('crawling-stats').classList.remove('d-none');
+        })
+        .catch(error => {
+            console.error('통계 정보 가져오기 오류:', error);
+            document.getElementById('crawling-stats-loading').innerHTML = '<div class="alert alert-danger">통계 정보를 가져오는 중 오류가 발생했습니다.</div>';
+        });
+    
+    // 최근 코드 목록 가져오기
+    fetch('/code/api/list?limit=5')
+        .then(response => response.json())
+        .then(data => {
+            if (data.length === 0) {
+                document.getElementById('recent-codes-loading').classList.add('d-none');
+                document.getElementById('no-codes').classList.remove('d-none');
+                return;
+            }
+            
+            const tbody = document.getElementById('recent-codes-table');
+            data.forEach(code => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${code.name}</td>
+                    <td>${code.repo_name}</td>
+                    <td>${code.quality_score ? code.quality_score.toFixed(1) : 'N/A'}</td>
+                    <td>${code.is_suitable ? '<span class="badge bg-success">적합</span>' : '<span class="badge bg-danger">부적합</span>'}</td>
+                    <td>
+                        <a href="/code/${code.id}" class="btn btn-sm btn-primary">보기</a>
+                    </td>
+                `;
+                tbody.appendChild(row);
+            });
+            
+            document.getElementById('recent-codes-loading').classList.add('d-none');
+            document.getElementById('recent-codes').classList.remove('d-none');
+        })
+        .catch(error => {
+            console.error('코드 목록 가져오기 오류:', error);
+            document.getElementById('recent-codes-loading').innerHTML = '<div class="alert alert-danger">코드 목록을 가져오는 중 오류가 발생했습니다.</div>';
+        });
+});
+</script>
+{% endblock %}

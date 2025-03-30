@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2>코드 목록</h2>
+    <table class="table table-striped">
+        <thead>
+            <tr>
+                <th>저장소 이름</th>
+                <th>파일 이름</th>
+                <th>파일 경로</th>
+                <th>품질 점수</th>
+                <th>다운로드 날짜</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for code in code_files %}
+            <tr>
+                <td>{{ code.repo_name }}</td>
+                <td>{{ code.file_name }}</td>
+                <td>{{ code.file_path }}</td>
+                <td>{{ code.quality_score or 'N/A' }}</td>
+                <td>{{ code.downloaded_at }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

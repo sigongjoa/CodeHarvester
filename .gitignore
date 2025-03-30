@@ -1,0 +1,6 @@
+# .gitignore 예시
+.env
+__pycache__/
+*.pyc
+collected_code/
+code_database.db

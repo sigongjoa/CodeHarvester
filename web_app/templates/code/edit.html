@@ -1,0 +1,79 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-8">
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="card-title">코드 편집</h5>
+            </div>
+            <div class="card-body">
+                <div class="mb-4">
+                    <h4>{{ code.name }}</h4>
+                    <p class="text-muted">저장소: {{ code.repo_name }}</p>
+                </div>
+                
+                <form method="POST" action="{{ url_for('code.edit', code_id=code.id) }}">
+                    <div class="mb-3">
+                        <label for="codeContent" class="form-label">코드 내용</label>
+                        <textarea class="form-control code-editor" id="codeContent" name="content" rows="20">{{ content }}</textarea>
+                    </div>
+                    <div class="d-flex justify-content-between">
+                        <a href="{{ url_for('code.view', code_id=code.id) }}" class="btn btn-secondary">취소</a>
+                        <button type="submit" class="btn btn-primary">저장</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-4">
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="card-title">편집 도움말</h5>
+            </div>
+            <div class="card-body">
+                <p>코드를 직접 편집할 수 있습니다. 편집 후 저장 버튼을 클릭하면 변경사항이 저장됩니다.</p>
+                <p>주의: 코드 편집은 원본 파일을 직접 수정합니다. 필요한 경우 미리 백업을 해두세요.</p>
+            </div>
+        </div>
+        
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title">코드 정보</h5>
+            </div>
+            <div class="card-body">
+                <p><strong>품질 점수:</strong> {{ "%.1f"|format(code.quality_score) if code.quality_score else 'N/A' }}</p>
+                <p><strong>코드 라인:</strong> {{ code.code_lines }}</p>
+                <p><strong>적합성:</strong> 
+                    {% if code.is_suitable %}
+                    <span class="badge bg-success">적합</span>
+                    {% else %}
+                    <span class="badge bg-danger">부적합</span>
+                    {% endif %}
+                </p>
+                <p><strong>로컬 경로:</strong> <small class="text-muted">{{ code.local_path }}</small></p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/codemirror.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/codemirror.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/mode/python/python.min.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // CodeMirror 에디터 초기화
+    var editor = CodeMirror.fromTextArea(document.getElementById('codeContent'), {
+        lineNumbers: true,
+        mode: 'python',
+        theme: 'default',
+        indentUnit: 4,
+        smartIndent: true,
+        lineWrapping: true
+    });
+});
+</script>
+{% endblock %}

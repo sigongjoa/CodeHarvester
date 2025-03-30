@@ -1,0 +1,67 @@
+[
+  {
+    "repo_name": "public-apis",
+    "repo_full_name": "public-apis/public-apis",
+    "repo_url": "https://github.com/public-apis/public-apis",
+    "repo_stars": 334445,
+    "repo_license": "MIT License",
+    "file_name": "__init__.py",
+    "file_path": "scripts/tests/__init__.py",
+    "file_url": "https://github.com/public-apis/public-apis/blob/master/scripts/tests/__init__.py",
+    "local_path": "test_crawl_result/public-apis_public-apis/__init__.py",
+    "quality_score": null,
+    "downloaded_at": "2025-03-30T04:28:01.961360"
+  },
+  {
+    "repo_name": "public-apis",
+    "repo_full_name": "public-apis/public-apis",
+    "repo_url": "https://github.com/public-apis/public-apis",
+    "repo_stars": 334445,
+    "repo_license": "MIT License",
+    "file_name": "test_validate_format.py",
+    "file_path": "scripts/tests/test_validate_format.py",
+    "file_url": "https://github.com/public-apis/public-apis/blob/master/scripts/tests/test_validate_format.py",
+    "local_path": "test_crawl_result/public-apis_public-apis/test_validate_format.py",
+    "quality_score": null,
+    "downloaded_at": "2025-03-30T04:28:02.830034"
+  },
+  {
+    "repo_name": "public-apis",
+    "repo_full_name": "public-apis/public-apis",
+    "repo_url": "https://github.com/public-apis/public-apis",
+    "repo_stars": 334445,
+    "repo_license": "MIT License",
+    "file_name": "test_validate_links.py",
+    "file_path": "scripts/tests/test_validate_links.py",
+    "file_url": "https://github.com/public-apis/public-apis/blob/master/scripts/tests/test_validate_links.py",
+    "local_path": "test_crawl_result/public-apis_public-apis/test_validate_links.py",
+    "quality_score": null,
+    "downloaded_at": "2025-03-30T04:28:03.736687"
+  },
+  {
+    "repo_name": "public-apis",
+    "repo_full_name": "public-apis/public-apis",
+    "repo_url": "https://github.com/public-apis/public-apis",
+    "repo_stars": 334445,
+    "repo_license": "MIT License",
+    "file_name": "__init__.py",
+    "file_path": "scripts/validate/__init__.py",
+    "file_url": "https://github.com/public-apis/public-apis/blob/master/scripts/validate/__init__.py",
+    "local_path": "test_crawl_result/public-apis_public-apis/__init__.py",
+    "quality_score": null,
+    "downloaded_at": "2025-03-30T04:28:04.658502"
+  },
+  {
+    "repo_name": "public-apis",
+    "repo_full_name": "public-apis/public-apis",
+    "repo_url": "https://github.com/public-apis/public-apis",
+    "repo_stars": 334445,
+    "repo_license": "MIT License",
+    "file_name": "format.py",
+    "file_path": "scripts/validate/format.py",
+    "file_url": "https://github.com/public-apis/public-apis/blob/master/scripts/validate/format.py",
+    "local_path": "test_crawl_result/public-apis_public-apis/format.py",
+    "quality_score": null,
+    "downloaded_at": "2025-03-30T04:28:05.534542"
+  }
+]

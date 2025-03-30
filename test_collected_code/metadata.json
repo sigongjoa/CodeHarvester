@@ -1,0 +1,44 @@
+[
+  {
+    "repo_name": "public-apis",
+    "repo_full_name": "public-apis/public-apis",
+    "repo_url": "https://github.com/public-apis/public-apis",
+    "repo_stars": 334261,
+    "repo_license": "MIT License",
+    "file_name": "__init__.py",
+    "file_path": "scripts/tests/__init__.py",
+    "file_url": "https://github.com/public-apis/public-apis/blob/master/scripts/tests/__init__.py",
+    "local_path": "test_collected_code/public-apis_public-apis/__init__.py",
+    "quality_score": 0.0,
+    "downloaded_at": "2025-03-28T09:18:59.047927",
+    "code_lines": 0,
+    "is_suitable": false,
+    "unsuitable_reason": "\ucf54\ub4dc \ub77c\uc778 \uc218 \ubd80\uc871 (0 < 10)",
+    "complexity": {
+      "avg_complexity": 0,
+      "function_count": 0,
+      "max_complexity": 0
+    }
+  },
+  {
+    "repo_name": "public-apis",
+    "repo_full_name": "public-apis/public-apis",
+    "repo_url": "https://github.com/public-apis/public-apis",
+    "repo_stars": 334261,
+    "repo_license": "MIT License",
+    "file_name": "test_validate_format.py",
+    "file_path": "scripts/tests/test_validate_format.py",
+    "file_url": "https://github.com/public-apis/public-apis/blob/master/scripts/tests/test_validate_format.py",
+    "local_path": "test_collected_code/public-apis_public-apis/test_validate_format.py",
+    "quality_score": 7.3,
+    "downloaded_at": "2025-03-28T09:18:59.900556",
+    "code_lines": 361,
+    "is_suitable": true,
+    "unsuitable_reason": null,
+    "complexity": {
+      "avg_complexity": 1.72,
+      "function_count": 25,
+      "max_complexity": 4
+    }
+  }
+]

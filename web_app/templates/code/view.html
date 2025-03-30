@@ -1,0 +1,155 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-8">
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="card-title">코드 상세 정보</h5>
+            </div>
+            <div class="card-body">
+                <div class="mb-4">
+                    <h4>{{ code.name }}</h4>
+                    <p class="text-muted">저장소: {{ code.repo_name }}</p>
+                    
+                    <div class="row">
+                        <div class="col-md-3">
+                            <p><strong>품질 점수:</strong> {{ "%.1f"|format(code.quality_score) if code.quality_score else 'N/A' }}</p>
+                        </div>
+                        <div class="col-md-3">
+                            <p><strong>코드 라인:</strong> {{ code.code_lines }}</p>
+                        </div>
+                        <div class="col-md-3">
+                            <p><strong>적합성:</strong> 
+                                {% if code.is_suitable %}
+                                <span class="badge bg-success">적합</span>
+                                {% else %}
+                                <span class="badge bg-danger">부적합</span>
+                                {% endif %}
+                            </p>
+                        </div>
+                        <div class="col-md-3">
+                            <p><strong>로컬 경로:</strong> <small class="text-muted">{{ code.local_path }}</small></p>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <strong>태그:</strong>
+                        {% if tags %}
+                            {% for tag in tags %}
+                            <span class="badge bg-info">{{ tag }}</span>
+                            {% endfor %}
+                        {% else %}
+                            <span class="text-muted">없음</span>
+                        {% endif %}
+                        
+                        <!-- 태그 관리 버튼 -->
+                        <button type="button" class="btn btn-sm btn-outline-primary ms-2" data-bs-toggle="modal" data-bs-target="#tagModal">
+                            태그 관리
+                        </button>
+                        
+                        <!-- 태그 관리 모달 -->
+                        <div class="modal fade" id="tagModal" tabindex="-1" aria-labelledby="tagModalLabel" aria-hidden="true">
+                            <div class="modal-dialog">
+                                <div class="modal-content">
+                                    <div class="modal-header">
+                                        <h5 class="modal-title" id="tagModalLabel">태그 관리</h5>
+                                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                    </div>
+                                    <div class="modal-body">
+                                        <h6>현재 태그</h6>
+                                        <div class="mb-3">
+                                            {% if tags %}
+                                                {% for tag in tags %}
+                                                <div class="d-inline-block mb-2 me-2">
+                                                    <span class="badge bg-info">{{ tag }}</span>
+                                                    <form action="{{ url_for('code.manage_tag', code_id=code.id) }}" method="POST" class="d-inline">
+                                                        <input type="hidden" name="action" value="remove">
+                                                        <input type="hidden" name="tag_name" value="{{ tag }}">
+                                                        <button type="submit" class="btn btn-sm btn-danger">×</button>
+                                                    </form>
+                                                </div>
+                                                {% endfor %}
+                                            {% else %}
+                                                <p class="text-muted">태그가 없습니다.</p>
+                                            {% endif %}
+                                        </div>
+                                        
+                                        <h6>태그 추가</h6>
+                                        <form action="{{ url_for('code.manage_tag', code_id=code.id) }}" method="POST">
+                                            <input type="hidden" name="action" value="add">
+                                            <div class="input-group">
+                                                <input type="text" class="form-control" name="tag_name" placeholder="새 태그 이름">
+                                                <button type="submit" class="btn btn-primary">추가</button>
+                                            </div>
+                                        </form>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="btn-group">
+                        <a href="{{ url_for('code.edit', code_id=code.id) }}" class="btn btn-warning">편집</a>
+                        <button type="button" class="btn btn-danger" data-bs-toggle="modal" data-bs-target="#deleteModal">삭제</button>
+                    </div>
+                    
+                    <!-- 삭제 확인 모달 -->
+                    <div class="modal fade" id="deleteModal" tabindex="-1" aria-labelledby="deleteModalLabel" aria-hidden="true">
+                        <div class="modal-dialog">
+                            <div class="modal-content">
+                                <div class="modal-header">
+                                    <h5 class="modal-title" id="deleteModalLabel">코드 삭제 확인</h5>
+                                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                </div>
+                                <div class="modal-body">
+                                    <p>정말로 <strong>{{ code.name }}</strong> 파일을 삭제하시겠습니까?</p>
+                                    <p class="text-danger">이 작업은 되돌릴 수 없습니다.</p>
+                                </div>
+                                <div class="modal-footer">
+                                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">취소</button>
+                                    <form action="{{ url_for('code.delete', code_id=code.id) }}" method="POST" class="d-inline">
+                                        <button type="submit" class="btn btn-danger">삭제</button>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <hr>
+                
+                <h5>코드 내용</h5>
+                <div class="code-container bg-light p-3 rounded">
+                    <pre><code class="language-python">{{ content }}</code></pre>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-4">
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="card-title">작업</h5>
+            </div>
+            <div class="card-body">
+                <div class="d-grid gap-3">
+                    <a href="{{ url_for('code.index') }}" class="btn btn-secondary">코드 목록으로 돌아가기</a>
+                    <a href="{{ url_for('code.edit', code_id=code.id) }}" class="btn btn-warning">코드 편집</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.7.0/styles/default.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.7.0/highlight.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.7.0/languages/python.min.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    hljs.highlightAll();
+});
+</script>
+{% endblock %}

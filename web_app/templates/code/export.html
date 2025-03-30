@@ -1,0 +1,137 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-12">
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="card-title">데이터 내보내기</h5>
+            </div>
+            <div class="card-body">
+                <div class="alert alert-info">
+                    <p>이 페이지에서는 수집된 코드 데이터를 CSV 또는 JSON 형식으로 내보낼 수 있습니다.</p>
+                </div>
+                
+                <form id="exportForm" class="mb-4">
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label for="exportFormat" class="form-label">내보내기 형식</label>
+                            <select class="form-select" id="exportFormat" name="format">
+                                <option value="csv">CSV</option>
+                                <option value="json">JSON</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label for="exportQuery" class="form-label">검색 필터 (선택사항)</label>
+                            <input type="text" class="form-control" id="exportQuery" name="query" placeholder="검색어">
+                        </div>
+                    </div>
+                    
+                    <div class="row mb-3">
+                        <div class="col-md-3">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="exportSuitableOnly" name="suitable_only">
+                                <label class="form-check-label" for="exportSuitableOnly">
+                                    적합한 코드만 내보내기
+                                </label>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <label for="exportMinQuality" class="form-label">최소 품질 점수</label>
+                            <input type="number" class="form-control" id="exportMinQuality" name="min_quality" placeholder="예: 6.0" step="0.1" min="0" max="10">
+                        </div>
+                    </div>
+                    
+                    <button type="submit" class="btn btn-primary" id="exportBtn">내보내기 시작</button>
+                </form>
+                
+                <div id="exportProgress" class="d-none">
+                    <div class="progress mb-3">
+                        <div class="progress-bar progress-bar-striped progress-bar-animated" role="progressbar" style="width: 100%"></div>
+                    </div>
+                    <p id="exportStatus" class="text-muted">내보내기 진행 중...</p>
+                </div>
+                
+                <div id="exportResult" class="alert alert-success d-none">
+                    <p id="exportResultMessage"></p>
+                    <div id="exportDownload"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const exportForm = document.getElementById('exportForm');
+    const exportBtn = document.getElementById('exportBtn');
+    const exportProgress = document.getElementById('exportProgress');
+    const exportStatus = document.getElementById('exportStatus');
+    const exportResult = document.getElementById('exportResult');
+    const exportResultMessage = document.getElementById('exportResultMessage');
+    const exportDownload = document.getElementById('exportDownload');
+    
+    exportForm.addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        // 폼 데이터 가져오기
+        const format = document.getElementById('exportFormat').value;
+        const query = document.getElementById('exportQuery').value;
+        const suitableOnly = document.getElementById('exportSuitableOnly').checked;
+        const minQuality = document.getElementById('exportMinQuality').value;
+        
+        // 내보내기 시작
+        exportBtn.disabled = true;
+        exportProgress.classList.remove('d-none');
+        exportResult.classList.add('d-none');
+        
+        // API 호출
+        fetch('/code_crud/api/export', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                format: format,
+                query: query,
+                suitable_only: suitableOnly,
+                min_quality: minQuality ? parseFloat(minQuality) : null
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            exportProgress.classList.add('d-none');
+            
+            if (data.success) {
+                exportResultMessage.textContent = data.message;
+                
+                // 다운로드 링크 생성
+                const downloadUrl = `/code_crud/download/${data.file_path}`;
+                exportDownload.innerHTML = `
+                    <a href="${downloadUrl}" class="btn btn-success mt-2" download="${data.file_name}">
+                        <i class="bi bi-download"></i> 파일 다운로드
+                    </a>
+                `;
+                
+                exportResult.classList.remove('d-none');
+            } else {
+                alert('오류: ' + data.message);
+            }
+            
+            exportBtn.disabled = false;
+        })
+        .catch(error => {
+            console.error('내보내기 오류:', error);
+            exportProgress.classList.add('d-none');
+            alert('오류가 발생했습니다: ' + error.message);
+            exportBtn.disabled = false;
+        });
+    });
+});
+</script>
+{% endblock %}
