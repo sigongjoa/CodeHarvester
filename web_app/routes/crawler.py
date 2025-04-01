@@ -88,12 +88,17 @@ def api_start_crawl():
         }), 500
 
 
-# ✅ API: URL 기반 크롤링 시작
 @crawler.route('/api/start_url', methods=['POST'])
 def api_start_url_crawl():
     data = request.get_json()
     repo_url = data.get('repo_url', '')
-    max_files = int(data.get('max_files', 10))
+    max_files_input = data.get('max_files', '')
+    
+    # 빈 값이나 문자열인 경우 None으로 처리
+    if max_files_input == '' or max_files_input is None:
+        max_files = None
+    else:
+        max_files = int(max_files_input)
 
     if not repo_url or 'github.com' not in repo_url:
         return jsonify({
@@ -118,7 +123,6 @@ def api_start_url_crawl():
             'success': False,
             'message': f'크롤링 작업 시작 중 오류 발생: {str(e)}'
         }), 500
-
 
 # ✅ API: 크롤링 상태 조회
 @crawler.route('/api/status')
@@ -190,7 +194,10 @@ def show_db():
 @crawler.route('/crawl_by_url', methods=['POST'])
 def crawl_by_url():
     repo_url = request.form.get('repo_url')
-    max_files = int(request.form.get('max_files', 10))
+    max_files_input = request.form.get('max_files', '')
+    
+    # 빈 문자열이면 None으로 처리, 그렇지 않으면 정수로 변환
+    max_files = None if max_files_input == '' else int(max_files_input)
 
     if not repo_url:
         flash('GitHub 저장소 URL을 입력해주세요.', 'warning')
